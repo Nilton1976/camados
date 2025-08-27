@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sistema de Chamados - Manutenção Preditiva</title>
+  <meta name="description" content="Sistema completo para abertura e acompanhamento de chamados de manutenção preditiva" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              200: '#bfdbfe',
+              300: '#93c5fd',
+              400: '#60a5fa',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root { 
+      color-scheme: light dark; 
+      --primary: #2563eb;
+      --primary-dark: #1e40af;
+      --secondary: #64748b;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+    }
+    
+    html { 
+      font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif; 
+      scroll-behavior: smooth;
+    }
+    
+    input[type="file"] { 
+      display: none; 
+    }
+    
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .progress-bar {
+      transition: width 0.3s ease;
+    }
+    
+    .slide-feedback {
+      transform: translateX(-100%);
+      animation: slideIn 0.5s forwards;
+    }
+    
+    @keyframes slideIn {
+      to { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-primary-50 to-primary-100 min-h-dvh text-gray-800">
+  <div class="max-w-4xl mx-auto p-4 sm:p-6">
+    <!-- Header com navegação -->
+    <header class="mb-8 bg-white rounded-2xl shadow-sm p-4 sm:p-6">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-4">
+          <div class="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center shadow-md animate-float">
+            <i class="fas fa-tools text-white text-2xl"></i>
+          </div>
+          <div>
+            <h1 class="text-2xl font-bold text-primary-800">Sistema de Chamados</h1>
+            <p class="text-sm text-gray-600">Manutenção Preditiva Inteligente</p>
+          </div>
+        </div>
+        
+        <nav class="flex gap-2">
+          <a href="#form-section" class="px-4 py-2 rounded-xl bg-primary-100 text-primary-700 font-medium hover:bg-primary-200 transition-colors">
+            <i class="fas fa-plus-circle mr-2"></i>Novo Chamado
+          </a>
+          <a href="#drafts-section" class="px-4 py-2 rounded-xl bg-white text-gray-700 font-medium border border-gray-300 hover:bg-gray-50 transition-colors">
+            <i class="fas fa-file-alt mr-2"></i>Rascunhos
+          </a>
+        </nav>
+      </div>
+    </header>
+
+    <!-- Estatísticas rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+      <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4 fade-in">
+        <div class="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center">
+          <i class="fas fa-clock text-blue-600 text-xl"></i>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Chamados em aberto</p>
+          <p class="text-2xl font-bold">12</p>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4 fade-in">
+        <div class="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center">
+          <i class="fas fa-check-circle text-green-600 text-xl"></i>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Resolvidos (30 dias)</p>
+          <p class="text-2xl font-bold">42</p>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-2xl p-4 shadow-sm flex items-center gap-4 fade-in">
+        <div class="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
+          <i class="fas fa-chart-line text-amber-600 text-xl"></i>
+        </div>
+        <div>
+          <p class="text-sm text-gray-600">Tempo médio</p>
+          <p class="text-2xl font-bold">2.3d</p>
+        </div>
+      </div>
+    </div>
+
+    <main class="flex flex-col lg:flex-row gap-8">
+      <!-- Formulário principal -->
+      <div class="lg:w-2/3" id="form-section">
+        <div class="bg-white rounded-2xl shadow-sm overflow-hidden">
+          <div class="bg-primary-600 p-4 sm:p-6 text-white">
+            <h2 class="text-xl font-bold flex items-center gap-2">
+              <i class="fas fa-plus-circle"></i>
+              Abrir Novo Chamado
+            </h2>
+            <p class="text-primary-100 text-sm mt-1">Preencha os dados abaixo para registrar um novo chamado de manutenção</p>
+          </div>
+          
+          <form id="ticketForm" class="p-4 sm:p-6 space-y-6" novalidate>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="cliente" class="block text-sm font-medium mb-2 flex items-center gap-1">
+                  <i class="fas fa-user text-primary-600 text-sm"></i>
+                  Seu nome *
+                </label>
+                <input id="cliente" name="cliente" type="text" required placeholder="Ex.: Maria Silva" 
+                  class="w-full rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 px-4 py-3 transition-colors" />
+              </div>
+              <div>
+                <label for="contato" class="block text-sm font-medium mb-2 flex items-center gap-1">
+                  <i class="fas fa-address-book text-primary-600 text-sm"></i>
+                  Contato *
+                </label>
+                <input id="contato" name="contato" type="text" required placeholder="Ex.: 11 9xxxx-xxxx ou email@exemplo.com" 
+                  class="w-full rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 px-4 py-3 transition-colors" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="local" class="block text-sm font-medium mb-2 flex items-center gap-1">
+                  <i class="fas fa-building text-primary-600 text-sm"></i>
+                  Local/Unidade *
+                </label>
+                <input id="local" name="local" type="text" required placeholder="Ex.: Loja Centro, 3º andar" 
+                  class="w-full rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 px-4 py-3 transition-colors" />
+              </div>
+              <div>
+                <label for="categoria" class="block text-sm font-medium mb-2 flex items-center gap-1">
+                  <i class="fas fa-tag text-primary-600 text-sm"></i>
+                  Categoria *
+                </label>
+                <select id="categoria" name="categoria" required 
+                  class="w-full rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 px-4 py-3 bg-white transition-colors">
+                  <option value="">Selecione…</option>
+                  <option>Elétrica</option>
+                  <option>Climatização</option>
+                  <option>Hidráulica</option>
+                  <option>Estrutural</option>
+                  <option>Automação</option>
+                  <option>Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="descricao" class="block text-sm font-medium mb-2 flex items-center gap-1">
+                <i class="fas fa-file-alt text-primary-600 text-sm"></i>
+                Observações / Descrição do problema *
+              </label>
+              <textarea id="descricao" name="descricao" required rows="4" 
+                placeholder="Descreva os sintomas, quando acontece, se é intermitente, ruídos, odores etc." 
+                class="w-full rounded-xl border border-gray-300 focus:border-primary-500 focus:ring-2 focus:ring-primary-200 px-4 py-3 transition-colors"></textarea>
+              <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                <i class="fas fa-lightbulb text-amber-500"></i>
+                Dica: quanto mais contexto, melhor a análise preditiva.
+              </p>
+            </div>
+
+            <div class="space-y-4">
+              <label class="block text-sm font-medium flex items-center gap-1">
+                <i class="fas fa-camera text-primary-600 text-sm"></i>
+                Fotos (até 3)
+              </label>
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4" id="previews"></div>
+              
+              <div class="flex flex-col sm:flex-row items-start gap-4">
+                <label for="fotos" class="inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-primary-600 text-white font-medium hover:bg-primary-700 active:scale-[.98] cursor-pointer transition-colors shadow-md">
+                  <i class="fas fa-plus"></i>
+                  Adicionar fotos
+                </label>
+                <input id="fotos" name="fotos" accept="image/*" capture="environment" type="file" multiple>
+                
+                <div class="text-xs text-gray-500 bg-gray-50 p-3 rounded-xl">
+                  <p class="font-medium flex items-center gap-1"><i class="fas fa-info-circle text-primary-600"></i> Recomendações:</p>
+                  <ul class="mt-1 space-y-1">
+                    <li class="flex items-start gap-1"><i class="fas fa-check-circle text-success text-xs mt-0.5"></i> Use a câmera traseira para melhor qualidade</li>
+                    <li class="flex items-start gap-1"><i class="fas fa-check-circle text-success text-xs mt-0.5"></i> Máximo de 3 fotos por chamado</li>
+                    <li class="flex items-start gap-1"><i class="fas fa-check-circle text-success text-xs mt-0.5"></i> Foque na área do problema</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-4 bg-blue-50 rounded-xl">
+              <input id="geoConsent" type="checkbox" class="mt-1 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+              <label for="geoConsent" class="text-sm">
+                <span class="font-medium">Anexar localização aproximada (GPS) ao chamado</span>
+                <p class="text-xs text-gray-600 mt-1">Sua localização ajuda nossa equipe a priorizar e direcionar o atendimento mais rapidamente.</p>
+              </label>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 pt-4 border-t border-gray-200">
+              <button type="submit" class="flex-1 inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-primary-600 text-white font-medium hover:bg-primary-700 active:scale-[.98] transition-colors shadow-md">
+                <i class="fas fa-paper-plane"></i>
+                Enviar chamado
+              </button>
+              <button type="button" id="btnSalvarRasc" class="sm:w-48 inline-flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-gray-100 text-gray-700 font-medium hover:bg-gray-200 active:scale-[.98] transition-colors">
+                <i class="fas fa-save"></i>
+                Salvar rascunho
+              </button>
+            </div>
+
+            <p class="text-xs text-gray-500 text-center">
+              Ao enviar, você concorda com o uso das informações para atendimento e melhoria de manutenção preditiva.
+            </p>
+          </form>
+        </div>
+      </div>
+
+      <!-- Painel lateral -->
+      <div class="lg:w-1/3 space-y-6">
+        <!-- Status de upload -->
+        <div class="bg-white rounded-2xl shadow-sm p-5" id="upload-status" style="display: none;">
+          <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
+            <i class="fas fa-cloud-upload-alt text-primary-600"></i>
+            Enviando arquivos...
+          </h3>
+          <div class="w-full bg-gray-200 rounded-full h-2.5">
+            <div class="bg-primary-600 h-2.5 rounded-full progress-bar" style="width: 0%"></div>
+          </div>
+          <p class="text-xs text-gray-600 mt-2 text-center">0%</p>
+        </div>
+
+        <!-- Chamados recentes -->
+        <div class="bg-white rounded-2xl shadow-sm p-5">
+          <h3 class="font-medium text-gray-800 mb-4 flex items-center gap-2">
+            <i class="fas fa-history text-primary-600"></i>
+            Seus chamados recentes
+          </h3>
+          
+          <div class="space-y-3">
+            <div class="flex items-center gap-3 p-3 bg-green-50 rounded-xl">
+              <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+                <i class="fas fa-check text-green-600"></i>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-medium">Elétrica - Loja Centro</p>
+                <p class="text-xs text-gray-600">Resolvido há 2 dias</p>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-3 p-3 bg-amber-50 rounded-xl">
+              <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center">
+                <i class="fas fa-clock text-amber-600"></i>
+              </div>
+              <div class="flex-1">
+                <p class="text-sm font-medium">Climatização - Filial Sul</p>
+                <p class="text-xs text-gray-600">Em andamento</p>
+              </div>
+            </div>
+          </div>
+          
+          <button class="w-full mt-4 text-sm text-primary-600 font-medium hover:text-primary-800 flex items-center justify-center gap-2">
+            Ver todos os chamados
+            <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+
+        <!-- Dicas -->
+        <div class="bg-blue-50 rounded-2xl shadow-sm p-5">
+          <h3 class="font-medium text-gray-800 mb-3 flex items-center gap-2">
+            <i class="fas fa-lightbulb text-amber-500"></i>
+            Dicas para um bom chamado
+          </h3>
+          
+          <ul class="space-y-2 text-sm text-gray-700">
+            <li class="flex items-start gap-2">
+              <i class="fas fa-check-circle text-success mt-0.5"></i>
+              <span>Descreva o problema com detalhes</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fas fa-check-circle text-success mt-0.5"></i>
+              <span>Inclua fotos claras do problema</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fas fa-check-circle text-success mt-0.5"></i>
+              <span>Informe há quanto tempo ocorre</span>
+            </li>
+            <li class="flex items-start gap-2">
+              <i class="fas fa-check-circle text-success mt-0.5"></i>
+              <span>Mencione se é intermitente</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </main>
+
+    <!-- Seção de rascunhos e pendentes -->
+    <section class="mt-8 bg-white rounded-2xl shadow-sm p-5" id="drafts-section">
+      <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+        <i class="fas fa-file-alt text-primary-600"></i>
+        Envios pendentes e rascunhos
+      </h2>
+      
+      <div id="pendentesSection" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-medium text-gray-700">Chamados aguardando envio</h3>
+          <button id="btnReenviar" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 text-white text-sm hover:bg-emerald-700 transition-colors">
+            <i class="fas fa-sync-alt"></i>
+            Tentar reenviar todos
+          </button>
+        </div>
+        <ul id="pendentesList" class="space-y-3"></ul>
+      </div>
+      
+      <div class="mt-6">
+        <h3 class="font-medium text-gray-700 mb-3">Seus rascunhos salvos</h3>
+        <div id="rascunhosList" class="space-y-3">
+          <p class="text-sm text-gray-500 text-center py-4" id="empty-drafts">Nenhum rascunho salvo</p>
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-8 text-center text-xs text-gray-600">
+      <p>© <span id="ano"></span> Sistema de Chamados - Manutenção Preditiva</p>
+    </footer>
+  </div>
+
+  <div id="toast" class="fixed inset-x-0 top-3 flex justify-center pointer-events-none z-50" aria-live="polite"></div>
+
+  <script>
+    // ================== CONFIGURAÇÃO DO BACKEND ==================
+    const BACKEND_ENDPOINT = ""; // Coloque aqui sua URL (ex.: "https://sua-api.com/chamados")
+    const AUTH_TOKEN = ""; // opcional, ex.: "Bearer xxxxx"
+
+    // ================== ELEMENTOS DO DOM ==================
+    const form = document.getElementById('ticketForm');
+    const previews = document.getElementById('previews');
+    const inputFotos = document.getElementById('fotos');
+    const geoConsent = document.getElementById('geoConsent');
+    const toast = document.getElementById('toast');
+    const btnSalvarRasc = document.getElementById('btnSalvarRasc');
+    const pendentesSection = document.getElementById('pendentesSection');
+    const pendentesList = document.getElementById('pendentesList');
+    const btnReenviar = document.getElementById('btnReenviar');
+    const uploadStatus = document.getElementById('upload-status');
+    const progressBar = document.querySelector('.progress-bar');
+    const emptyDrafts = document.getElementById('empty-drafts');
+    const rascunhosList = document.getElementById('rascunhosList');
+
+    const MAX_FOTOS = 3;
+    const MAX_DIM = 1280;
+    const JPEG_QUALITY = 0.82;
+
+    const STORAGE_KEY_RASC = 'chamado_rascunho_v2';
+    const STORAGE_KEY_QUEUE = 'chamados_pendentes_v2';
+
+    // ================== INICIALIZAÇÃO ==================
+    document.getElementById('ano').textContent = new Date().getFullYear();
+    carregarRascunhos();
+
+    // ================== FUNÇÕES DE UI ==================
+    function showToast(msg, type = 'info', timeout = 4000) {
+      const color = type === 'success' ? 'bg-emerald-600' : 
+                   type === 'error' ? 'bg-red-600' : 
+                   type === 'warning' ? 'bg-amber-500' : 'bg-primary-600';
+      
+      const icon = type === 'success' ? 'fa-check-circle' : 
+                  type === 'error' ? 'fa-exclamation-circle' : 
+                  type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+      
+      const el = document.createElement('div');
+      el.className = `${color} text-white px-5 py-3 rounded-xl shadow-lg flex items-center gap-3 pointer-events-auto slide-feedback`;
+      el.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${msg}</span>
+      `;
+      toast.appendChild(el);
+      setTimeout(() => el.remove(), timeout);
+    }
+
+    function updateProgress(percent) {
+      if (progressBar) {
+        progressBar.style.width = `${percent}%`;
+        const percentText = uploadStatus.querySelector('p');
+        if (percentText) percentText.textContent = `${percent}%`;
+      }
+    }
+
+    function showUploadStatus() {
+      if (uploadStatus) uploadStatus.style.display = 'block';
+      updateProgress(0);
+    }
+
+    function hideUploadStatus() {
+      if (uploadStatus) uploadStatus.style.display = 'none';
+    }
+
+    // ================== FUNÇÕES DE FORMULÁRIO ==================
+    inputFotos.addEventListener('change', () => {
+      previews.innerHTML = '';
+      const files = Array.from(inputFotos.files || []).slice(0, MAX_FOTOS);
+      
+      if ((inputFotos.files || []).length > MAX_FOTOS) {
+        showToast(`Máximo de ${MAX_FOTOS} fotos. Usaremos as primeiras.`, 'info');
+      }
+      
+      files.forEach(file => {
+        const url = URL.createObjectURL(file);
+        const div = document.createElement('div');
+        div.className = 'relative group';
+        div.innerHTML = `
+          <img src="${url}" alt="${file.name}" class="w-full aspect-square object-cover rounded-xl ring-1 ring-black/5">
+          <button type="button" class="absolute top-2 right-2 w-7 h-7 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+            <i class="fas fa-times text-xs"></i>
+          </button>
+        `;
+        
+        const removeBtn = div.querySelector('button');
+        removeBtn.addEventListener('click', () => {
+          div.remove();
+          // Criar nova FileList sem o arquivo removido
+          const newFiles = Array.from(inputFotos.files).filter(f => f !== file);
+          const dataTransfer = new DataTransfer();
+          newFiles.forEach(f => dataTransfer.items.add(f));
+          inputFotos.files = dataTransfer.files;
+        });
+        
+        previews.appendChild(div);
+      });
+    });
+
+    btnSalvarRasc.addEventListener('click', () => {
+      const data = getFormDataSnapshot();
+      localStorage.setItem(STORAGE_KEY_RASC, JSON.stringify(data));
+      showToast('Rascunho salvo com sucesso!', 'success');
+      carregarRascunhos();
+    });
+
+    function carregarRascunhos() {
+      const saved = localStorage.getItem(STORAGE_KEY_RASC);
+      if (!saved) {
+        emptyDrafts.style.display = 'block';
+        return;
+      }
+      
+      try {
+        const d = JSON.parse(saved);
+        emptyDrafts.style.display = 'none';
+        
+        rascunhosList.innerHTML = `
+          <div class="p-4 bg-gray-50 rounded-xl">
+            <div class="flex items-start justify-between">
+              <div>
+                <p class="font-medium">${d.cliente || 'Sem nome'} - ${d.local || 'Sem local'}</p>
+                <p class="text-sm text-gray-600 mt-1">Categoria: ${d.categoria || 'Não definida'}</p>
+                <p class="text-xs text-gray-500 mt-2">Salvo em: ${new Date().toLocaleDateString()}</p>
+              </div>
+              <button class="p-2 text-primary-600 hover:text-primary-800" id="loadDraftBtn">
+                <i class="fas fa-edit"></i>
+              </button>
+            </div>
+            <button class="w-full mt-3 py-2 bg-primary-600 text-white rounded-lg text-sm font-medium hover:bg-primary-700 transition-colors" id="useDraftBtn">
+              Usar este rascunho
+            </button>
+          </div>
+        `;
+        
+        document.getElementById('useDraftBtn').addEventListener('click', () => {
+          for (const k of ['cliente', 'contato', 'local', 'categoria', 'descricao']) {
+            if (d[k]) document.getElementById(k).value = d[k];
+          }
+          showToast('Rascunho carregado! Revise os dados antes de enviar.', 'success');
+        });
+        
+      } catch (e) {
+        console.error('Erro ao carregar rascunho:', e);
+        emptyDrafts.style.display = 'block';
+      }
+    }
+
+    function getFormDataSnapshot() {
+      return {
+        cliente: document.getElementById('cliente').value.trim(),
+        contato: document.getElementById('contato').value.trim(),
+        local: document.getElementById('local').value.trim(),
+        categoria: document.getElementById('categoria').value,
+        descricao: document.getElementById('descricao').value.trim(),
+        savedAt: new Date().toISOString()
+      };
+    }
+
+    // ================== GEOLOCALIZAÇÃO ==================
+    async function getGeolocationIfAllowed() {
+      if (!geoConsent.checked || !('geolocation' in navigator)) return null;
+      
+      return new Promise((resolve) => {
+        navigator.geolocation.getCurrentPosition(
+          pos => resolve({ 
+            lat: pos.coords.latitude, 
+            lng: pos.coords.longitude, 
+            accuracy: pos.coords.accuracy 
+          }),
+          err => {
+            console.error('Erro de geolocalização:', err);
+            showToast('Não foi possível obter a localização.', 'error');
+            resolve(null);
+          },
+          { enableHighAccuracy: true, timeout: 7000, maximumAge: 30000 }
+        );
+      });
+    }
+
+    // ================== PROCESSAMENTO DE IMAGENS ==================
+    async function compressImage(file) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+          const scale = Math.min(1, MAX_DIM / Math.max(img.width, img.height));
+          const w = Math.round(img.width * scale);
+          const h = Math.round(img.height * scale);
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          
+          canvas.toBlob(
+            blob => {
+              if (!blob) reject(new Error('Falha na compressão'));
+              resolve(new File([blob], `chamado-${Date.now()}.jpg`, { type: 'image/jpeg' }));
+            },
+            'image/jpeg',
+            JPEG_QUALITY
+          );
+        };
+        
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+      });
+    }
+
+    // ================== ENVIO DO FORMULÁRIO ==================
+    async function buildFormData() {
+      const fd = new FormData();
+      const snap = getFormDataSnapshot();
+      Object.entries(snap).forEach(([k, v]) => fd.append(k, v));
+
+      const geo = await getGeolocationIfAllowed();
+      if (geo) {
+        fd.append('geo_lat', String(geo.lat));
+        fd.append('geo_lng', String(geo.lng));
+        fd.append('geo_accuracy', String(geo.accuracy));
+      }
+
+      const files = Array.from(inputFotos.files || []).slice(0, MAX_FOTOS);
+      for (let i = 0; i < files.length; i++) {
+        try {
+          const optimized = await compressImage(files[i]);
+          fd.append('fotos', optimized, optimized.name);
+        } catch (e) {
+          console.error('Erro ao comprimir imagem:', e);
+          fd.append('fotos', files[i], files[i].name);
+        }
+      }
+
+      fd.append('source', 'form_html_cliente_v2');
+      fd.append('timestamp', new Date().toISOString());
+
+      return fd;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const button = form.querySelector('button[type="submit"]');
+      const originalText = button.innerHTML;
+      button.disabled = true;
+      button.innerHTML = '<span class="animate-pulse"><i class="fas fa-circle-notch fa-spin"></i> Enviando...</span>';
+
+      try {
+        showUploadStatus();
+        const fd = await buildFormData();
+
+        // Simular progresso de upload
+        for (let i = 0; i <= 100; i += 10) {
+          updateProgress(i);
+          await new Promise(resolve => setTimeout(resolve, 200));
+        }
+
+        if (!BACKEND_ENDPOINT) {
+          // Modo de demonstração - simular sucesso
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          showToast('Chamado enviado com sucesso! (modo demonstração)', 'success');
+          form.reset();
+          previews.innerHTML = '';
+          localStorage.removeItem(STORAGE_KEY_RASC);
+          carregarRascunhos();
+        } else {
+          await sendToBackend(fd);
+          showToast('Chamado enviado com sucesso! ✅', 'success');
+          localStorage.removeItem(STORAGE_KEY_RASC);
+          form.reset();
+          previews.innerHTML = '';
+          carregarRascunhos();
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Falha ao enviar. Salvo na fila para reenvio.', 'error');
+        try {
+          const fd = await buildFormData();
+          queuePending(fd);
+        } catch (innerErr) {
+          console.error('Erro ao salvar na fila:', innerErr);
+        }
+      } finally {
+        button.disabled = false;
+        button.innerHTML = originalText;
+        hideUploadStatus();
+        renderQueue();
+      }
+    });
+
+    async function sendToBackend(formData) {
+      const resp = await fetch(BACKEND_ENDPOINT, {
+        method: 'POST',
+        headers: AUTH_TOKEN ? { Authorization: AUTH_TOKEN } : undefined,
+        body: formData,
+      });
+      if (!resp.ok) throw new Error(`Erro no backend: ${resp.status}`);
+      return await resp.json().catch(() => ({}));
+    }
+
+    // ================== FILA OFFLINE ==================
+    function queuePending(fd) {
+      const obj = { 
+        id: String(Date.now()), 
+        fields: {}, 
+        files: [], 
+        createdAt: Date.now() 
+      };
+      
+      for (const [k, v] of fd.entries()) {
+        if (v instanceof File) {
+          obj.files.push({ key: k, name: v.name, type: v.type, size: v.size });
+        } else {
+          obj.fields[k] = String(v);
+        }
+      }
+      
+      const fotos = Array.from(inputFotos.files || []).slice(0, MAX_FOTOS);
+      obj._rawFiles = fotos;
+      
+      const queue = JSON.parse(localStorage.getItem(STORAGE_KEY_QUEUE) || '[]');
+      queue.push(obj);
+      localStorage.setItem(STORAGE_KEY_QUEUE, JSON.stringify(queue));
+    }
+
+    function renderQueue() {
+      const queue = JSON.parse(localStorage.getItem(STORAGE_KEY_QUEUE) || '[]');
+      pendentesSection.classList.toggle('hidden', queue.length === 0);
+      pendentesList.innerHTML = '';
+      
+      queue.forEach(item => {
+        const li = document.createElement('li');
+        const d = new Date(item.createdAt);
+        li.className = 'p-4 rounded-xl bg-amber-50 ring-1 ring-amber-200 flex items-center justify-between gap-3';
+        li.innerHTML = `
+          <div>
+            <div class="text-sm font-medium">Chamado #${item.id}</div>
+            <div class="text-xs text-gray-600">${d.toLocaleString()} • ${item.files.length} foto(s)</div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button data-id="${item.id}" class="reenviar px-3 py-1.5 text-xs rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">
+              <i class="fas fa-paper-plane mr-1"></i>Reenviar
+            </button>
+            <button data-id="${item.id}" class="excluir px-3 py-1.5 text-xs rounded-lg bg-gray-200 hover:bg-gray-300">
+              <i class="fas fa-trash mr-1"></i>Excluir
+            </button>
+          </div>
+        `;
+        pendentesList.appendChild(li);
+      });
+    }
+
+    // ================== INICIALIZAÇÃO ==================
+    (() => {
+      const saved = localStorage.getItem(STORAGE_KEY_RASC);
+      if (saved) {
+        try {
+          const d = JSON.parse(saved);
+          for (const k of ['cliente', 'contato', 'local', 'categoria', 'descricao']) {
+            if (d[k]) document.getElementById(k).value = d[k];
+          }
+        } catch (e) {
+          console.error('Erro ao carregar rascunho:', e);
+        }
+      }
+      renderQueue();
+    })();
+
+    // ================== LISTENERS ADICIONAIS ==================
+    btnReenviar.addEventListener('click', () => processQueue());
+    pendentesList.addEventListener('click', (e) => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      const id = btn.getAttribute('data-id');
+      if (btn.classList.contains('reenviar')) processQueue(id);
+      if (btn.classList.contains('excluir')) {
+        const queue = JSON.parse(localStorage.getItem(STORAGE_KEY_QUEUE) || '[]');
+        const remain = queue.filter(x => x.id !== id);
+        localStorage.setItem(STORAGE_KEY_QUEUE, JSON.stringify(remain));
+        renderQueue();
+        showToast('Chamado removido da fila.', 'success');
+      }
+    });
+
+    // Detecção de conectividade
+    function updateOnlineStatus() {
+      if (!navigator.onLine) {
+        showToast('Você está offline. Os envios serão enfileirados.', 'warning', 5000);
+      }
+    }
+    
+    window.addEventListener('online', () => {
+      showToast('Conexão restabelecida. Você pode reenviar os pendentes.', 'success');
+    });
+    
+    window.addEventListener('offline', updateOnlineStatus);
+    updateOnlineStatus();
+  </script>
+</body>
+</html>
